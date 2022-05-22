@@ -16,51 +16,58 @@ PlayerActivationAPI = {}
 
 -- this function checks to see if this is a player activating another player and calls the validator and handler for "OnPlayerActivate"
 local function ObjectToPlayerHandler(eventStatus, pid, cellDescription, objects, players)
-	if Players[pid] == nil or Players[pid]:IsLoggedIn() == false then
-		return
-	end
-
+	-- check current cell
 	if LoadedCells[cellDescription] == nil then
 		return
 	end
-
-	-- Players (number of players)
-	-- players (other pid)
-
-	if tes3mp.IsObjectPlayer(#objects) == false then
+	
+	-- skip if it's not a player
+	for objectIndex, objectContainer in pairs(objects) do
 		return
 	end
 
-	if eventStatus.validDefaultHandler then
-		local otherPid = #players
-		local MenuKey = "PlayerActivationApiMenu_" .. tostring(pid)
-		eventStatus = customEventHooks.triggerValidators("OnPlayerActivate", {pid, otherPid, cellDescription})
-
-		Menus[MenuKey] = {
-			text = "",
-			buttons = {{caption = "Close", destinations = nil}}
-		}
-
-		local menu = Menus[MenuKey]
-		customEventHooks.triggerHandlers("OnPlayerActivate", eventStatus, {pid, otherPid, menu, cellDescription})
-
-		if eventStatus.validDefaultHandler then
-			menu.text = Players[otherPid].name
-			Players[pid].currentCustomMenu = MenuKey
-			menuHelper.DisplayMenu(pid, MenuKey)
-		end
-
-		Menus[MenuKey] = nil
+	-- get target player
+	local playerObject = nil
+	for playerIndex, playerContainer in pairs(players) do
+		playerObject = playerContainer
+		break
 	end
+
+	-- check target player
+	if playerObject == nil then
+		return
+	end
+
+	-- validate players
+	if eventStatus.validDefaultHandler == false then
+		return
+	end
+
+	local otherPid = playerObject.pid
+	local MenuKey = "PlayerActivationApiMenu_" .. tostring(pid)
+	eventStatus = customEventHooks.triggerValidators("OnPlayerActivate", {pid, otherPid, cellDescription})
+
+	Menus[MenuKey] = {
+		text = "",
+		buttons = {{caption = "Close", destinations = nil}}
+	}
+
+	local menu = Menus[MenuKey]
+	customEventHooks.triggerHandlers("OnPlayerActivate", eventStatus, {pid, otherPid, menu, cellDescription})
+
+	menu.text = Players[otherPid].name
+	Players[pid].currentCustomMenu = MenuKey
+	menuHelper.DisplayMenu(pid, MenuKey)
+
+	Menus[MenuKey] = nil
 end
 
 -- this validator just makes sure everyone is logged in
-function PlayerActivationAPI.OnPlayerActivateValidator(eventStatus, activatingPlayer, activatedPlayer, cellDescription)
-	if (Players[activatingPlayer] == nil or
-		Players[activatedPlayer] == nil or
-		Players[activatingPlayer]:IsLoggedIn() == false or
-		Players[activatedPlayer]:IsLoggedIn() == false or
-		LoadedCells[cellDescription] == nil) then
+function PlayerActivationAPI.OnPlayerActivateValidator(eventStatus, currentPlayer, targetPlayer, cellDescription)
+	if (Players[currentPlayer] == nil or
+		Players[targetPlayer] == nil or
+		Players[currentPlayer]:IsLoggedIn() == false or
+		Players[targetPlayer]:IsLoggedIn() == false) then
 		return customEventHooks.makeEventStatus(false, false)
 	end
 end

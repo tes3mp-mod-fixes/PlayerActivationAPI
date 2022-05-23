@@ -1,12 +1,12 @@
 --[[
 
-Adds an event when you activate a player called `OnPlayerActivate(pid, otherpid, menu, cellDescription)`  
+Adds an event when you activate a player called `OnPlayerActivate(pid, targetPid, menuObject, cellDescription)`  
 
 | argument        | description                                           |
 | --------------- | ----------------------------------------------------- |
-| pid             | The player id of the **activating** player            |
-| otherpid        | The player id of the **activated** player             |
-| menu            | A table that will be passed to menuHelper.DisplayMenu |
+| pid             | Current player id                                     |
+| targetPid       | Target player id                                      |
+| menuObject      | A table that will be passed to menuHelper.DisplayMenu |
 | cellDescription | The cell description of the **activated** player      |
 
 ]] --
@@ -38,13 +38,13 @@ local function ObjectToPlayerHandler(eventStatus, pid, cellDescription, objects,
 		return
 	end
 
+	local targetPid = playerObject.pid
+	eventStatus = customEventHooks.triggerValidators("OnPlayerActivate", {pid, targetPid, cellDescription})
+
 	-- validate players
 	if eventStatus.validDefaultHandler == false then
 		return
 	end
-
-	local targetPid = playerObject.pid
-	eventStatus = customEventHooks.triggerValidators("OnPlayerActivate", {pid, targetPid, cellDescription})
 
 	-- create menu
 	local MenuKey = "PlayerActivationAPI_Menu_" .. string.format(pid)

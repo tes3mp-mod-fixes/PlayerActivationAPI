@@ -43,23 +43,26 @@ local function ObjectToPlayerHandler(eventStatus, pid, cellDescription, objects,
 		return
 	end
 
-	local otherPid = playerObject.pid
-	local MenuKey = "PlayerActivationApiMenu_" .. tostring(pid)
-	eventStatus = customEventHooks.triggerValidators("OnPlayerActivate", {pid, otherPid, cellDescription})
+	local targetPid = playerObject.pid
+	eventStatus = customEventHooks.triggerValidators("OnPlayerActivate", {pid, targetPid, cellDescription})
 
+	-- create menu
+	local MenuKey = "PlayerActivationAPI_Menu_" .. string.format(pid)
 	Menus[MenuKey] = {
-		text = "",
-		buttons = {{caption = "Close", destinations = nil}}
+		text = Players[targetPid].name, 
+		buttons = {
+			{
+				caption = "Close", 
+				destinations = nil
+			}
+		}
 	}
 
-	local menu = Menus[MenuKey]
-	customEventHooks.triggerHandlers("OnPlayerActivate", eventStatus, {pid, otherPid, menu, cellDescription})
+	customEventHooks.triggerHandlers("OnPlayerActivate", eventStatus, {pid, targetPid, Menus[MenuKey], cellDescription})
 
-	menu.text = Players[otherPid].name
+	-- display menu
 	Players[pid].currentCustomMenu = MenuKey
 	menuHelper.DisplayMenu(pid, MenuKey)
-
-	Menus[MenuKey] = nil
 end
 
 -- this validator just makes sure everyone is logged in
